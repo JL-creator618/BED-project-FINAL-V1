@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+  relationMode = "prisma"
+}
+
+//Define your models here and add @@index
+model Property {
+  id            String     @id @default(uuid())  
+  title         String
+  description   String?
+  location      String
+  pricePerNight Float     
+  bedroomCount  Int
+  bathRoomCount Int
+  maxGuestCount Int
+  rating        Int 
+
+  hostId        String     
+  host          Host       @relation(fields: [hostId], references: [id])
+
+  amenities     Amenity[]  // many-to-many relationship
+  bookings      Booking[]  // one-to-many relationship
+  reviews       Review[]   // one-to-many relationship
+
+  @@index([hostId])
+  @@index([location])
+  @@index([pricePerNight])
+}
+
+model Host {
+  id          String     @id @default(uuid())
+  username    String
+  password    String
+  name        String
+  email       String     @unique
+  phoneNumber String?
+  pictureUrl  String
+  aboutMe     String
+
+  listings    Property[] // one-to-many relationship (host's properties)
+
+  @@index([name])
+}
+
+model User {
+  id         String     @id @default(uuid())
+  username   String     @unique
+  password   String
+  name       String
+  email      String
+  phoneNumber String
+  pictureUrl  String
+  
+  bookings   Booking[]
+  reviews    Review[]
+}
+
+model Amenity {
+  id         String     @id @default(uuid())
+  name       String     @unique
+  properties Property[] // many-to-many relationship
+}
+
+model Booking {
+  id             String   @id @default(uuid())
+ 
+  checkinDate    DateTime
+  checkoutDate   DateTime
+  numberOfGuests Int
+  totalPrice     Int
+  bookingStatus  String   @default("pending") // e.g., pending, confirmed, cancelled
+
+  userId         String   
+  user           User     @relation(fields:[userId], references: [id])
+
+  propertyId     String   
+  property       Property @relation(fields: [propertyId], references: [id])
+  
+  @@index([propertyId])
+  @@index([userId])
+  @@index([checkinDate, checkoutDate])
+  @@index([bookingStatus])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String?
+
+  userId     String   
+  user       User     @relation(fields:[userId], references: [id])
+  
+  propertyId String   
+  property   Property @relation(fields: [propertyId], references: [id])
+ 
+  @@index([propertyId])
+  @@index([userId])
+  @@index([rating])
+}
+
+
